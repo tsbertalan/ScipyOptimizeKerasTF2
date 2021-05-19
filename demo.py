@@ -1,14 +1,14 @@
 import numpy as np, tensorflow as tf, matplotlib.pyplot as plt
-from keras_scipy_opt import train_sgd, train_scipy, get_loss_and_gradient, sn
+from keras_scipy_opt import get_pred_and_jac, train_sgd, train_scipy, get_loss_and_gradient, sn, get_batched_losses_and_gradients, train_least_squares
 
 x_data = np.linspace(-1, 1, 1000)
-true_func = lambda x: x ** 2
+true_func = lambda x: x #** 2
 y_data = true_func(x_data + np.random.normal(loc=0, scale=.01, size=x_data.shape))
 
 
 layers = [
-    tf.keras.layers.Dense(4, activation='tanh'),
-    tf.keras.layers.Dense(4, activation='tanh'),
+    # tf.keras.layers.Dense(4, activation='tanh'),
+    # tf.keras.layers.Dense(4, activation='tanh'),
     tf.keras.layers.Dense(1,  activation='linear'),
 ]
 
@@ -20,7 +20,6 @@ output_tensor = act
 
 model = tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
 
-
 if False:
     losses = train_sgd(model, x_data, y_data)
 
@@ -30,9 +29,17 @@ if False:
     ax.set_ylabel('loss')
     ax.set_yscale('log')
 
+
 else:
-    result = train_scipy(model, x_data, y_data)
-    print(result.message)
+    x0 = None
+    if False:
+        result = train_scipy(model, x_data, y_data)
+        print(result.message)
+        x0 = result.x
+
+    if True:
+        result = train_least_squares(model, x_data, y_data, x0=x0, verbose=2, ftol=1e-15, xtol=1e-15, gtol=1e-15)
+        print(result.message)
 
 def show_fit():
     fig, ax = plt.subplots()
@@ -49,5 +56,6 @@ def show_fit():
 
 
 show_fit()
+
 
 plt.show()
