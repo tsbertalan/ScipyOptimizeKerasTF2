@@ -147,11 +147,9 @@ def train_scipy(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **
         return loss
 
     def jac(parameters):
-        if checksum(parameters) == objective.last_input_checksum:
-            return objective.last_gradient
-        else:
+        if not checksum(parameters) == objective.last_input_checksum:
             objective(parameters)
-            return objective.last_gradient
+        return objective.last_gradient.astype('float64') # cast is required for L-BFGS-B https://github.com/scipy/scipy/issues/5832
 
     result = scipy.optimize.minimize(objective, get_param_vector(model), jac=jac, **kwargs_scipy)
     set_param_vector(model, result.x)

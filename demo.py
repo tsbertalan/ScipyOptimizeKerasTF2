@@ -33,7 +33,7 @@ if False:
 
 # The fastest option seems to be scipy's minimize wrapper.
 elif True:
-    result = train_scipy(model, x_data, y_data, options=dict(disp=True))
+    result = train_scipy(model, x_data, y_data, options=dict(disp=True), method='CG')
 
 # This doesn't seem to converge.
 elif False:
@@ -45,7 +45,7 @@ elif True:
     result = train_least_squares(model, x_data, y_data, x0=x0, verbose=2, method='trf')
     print(result.message)
 
-# This might converge, but it's really slow.
+# This might converge, but it's really slow. I didn't wait.
 else:
     result = train_least_squares(model, x_data, y_data, x0=x0, verbose=2, method='dogbox')
     print(result.message)
