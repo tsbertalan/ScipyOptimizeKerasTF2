@@ -1,17 +1,31 @@
+"""
+Use Scipy's optimization routines to train a simple supervised Keras model.
+"""
 import numpy as np, tensorflow as tf, matplotlib.pyplot as plt
-from keras_scipy_opt import get_pred_and_jac, train_sgd, train_scipy, get_loss_and_gradient, scientific_notation, get_batched_losses_and_gradients, train_least_squares, scipy_curve_fit
 
+# Import from our module.
+from keras_scipy_opt import (
+    train_sgd, train_minimize, train_least_squares, train_curve_fit,
+    get_loss_and_gradient, scientific_notation 
+)
+
+# Make a stupid little demonstration task.
 x_data = np.linspace(-1, 1, 1000)
 true_func = lambda x: x ** 2
 y_data = true_func(x_data + np.random.normal(loc=0, scale=.01, size=x_data.shape))
 
-
+# Put together a stadard supervised Keras model.
 layers = [
     tf.keras.layers.Dense(4, activation='tanh'),
     tf.keras.layers.Dense(4, activation='tanh'),
     tf.keras.layers.Dense(1,  activation='linear'),
 ]
 
+# I use the "functional" API rather than the "sequential" because the functional
+# includes an Input Tensor, so the shape is pre-specified and therefore the weights
+# are initialized.
+# However, a Sequential would also work if you did something to get the weights to initialize
+# themselves (I guess call the network once with data, and/or call model.compile).
 input_tensor = tf.keras.Input(shape=(1,))
 act = input_tensor
 for l in layers:
@@ -20,6 +34,10 @@ output_tensor = act
 
 model = tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
 
+# Train the network deterministically.
+# I'll list a few different options here.
+
+# We will not specify any initialization of our own (use what Keras already did).
 x0 = None
 
 if False:
@@ -33,7 +51,7 @@ if False:
 
 # The fastest option seems to be scipy's minimize wrapper.
 elif True:
-    result = train_scipy(model, x_data, y_data, options=dict(disp=True), method='CG')
+    result = train_minimize(model, x_data, y_data, options=dict(disp=True), method='CG')
 
 # This doesn't seem to converge.
 elif False:
@@ -50,6 +68,8 @@ else:
     result = train_least_squares(model, x_data, y_data, x0=x0, verbose=2, method='dogbox')
     print(result.message)
 
+
+# Plot the results.
 def show_fit():
     fig, ax = plt.subplots()
     ax.scatter(x_data, y_data, color='black', label='Data', alpha=.25, s=1)
@@ -65,6 +85,5 @@ def show_fit():
 
 
 show_fit()
-
 
 plt.show()

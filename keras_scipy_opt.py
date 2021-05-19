@@ -129,7 +129,7 @@ def train_sgd(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, batc
 
     return losses
 
-def train_scipy(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **kwargs_scipy):
+def train_minimize(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **kwargs_scipy):
     """Uses scipy.optimize.minimize; kwargs_scipy (plus jac, the gradient) are passed on to that."""
 
     loss_function = Loss()
@@ -155,7 +155,7 @@ def train_scipy(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **
     set_param_vector(model, result.x)
     return result
 
-def scipy_curve_fit(model, x_data, y_data, x0=None, verbose=False, **kwargs_scipy):
+def train_curve_fit(model, x_data, y_data, x0=None, verbose=False, **kwargs_scipy):
     """Train with scipy.optimize.curve_fit. Only applicable to scalar-valued models."""
 
     m = len(x_data)
