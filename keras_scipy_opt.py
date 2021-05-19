@@ -1,5 +1,4 @@
-import numpy as np, tensorflow as tf, matplotlib.pyplot as plt
-from tensorflow.python.ops.variables import trainable_variables
+import numpy as np, tensorflow as tf
 from tqdm.auto import tqdm
 import scipy.optimize
 
@@ -103,7 +102,8 @@ def set_param_vector(model, new_vector):
     new_arrays = unflatten_param_vector(model, new_vector)
     return model.set_weights(new_arrays)
 
-def sn(number, digits=2):
+def scientific_notation(number, digits=2):
+    """Format a number in scientific notation."""
     formatter = '%.' + '%d' % digits + 'E'
     factor, exponent = (formatter % number).split('E')
     ffactor = str(float(factor))
@@ -112,6 +112,7 @@ def sn(number, digits=2):
     return r'%s \times 10^{%s}' % (factor, exponent)
 
 def train_sgd(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, batch_size=500, learning_rate=1e-2, n_epochs=2000):
+    """A simple SGD implementation just to test interfaces."""
     loss_function = Loss()
 
     losses = []
@@ -129,6 +130,7 @@ def train_sgd(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, batc
     return losses
 
 def train_scipy(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **kwargs_scipy):
+    """Uses scipy.optimize.minimize; kwargs_scipy (plus jac, the gradient) are passed on to that."""
 
     loss_function = Loss()
 
@@ -155,7 +157,33 @@ def train_scipy(model, x_data, y_data, Loss=tf.keras.losses.MeanSquaredError, **
     set_param_vector(model, result.x)
     return result
 
+def scipy_curve_fit(model, x_data, y_data, x0=None, verbose=False, **kwargs_scipy):
+    """Train with scipy.optimize.curve_fit. Only applicable to scalar-valued models."""
+
+    m = len(x_data)
+    if x0 is None:
+        x0 = get_param_vector(model)
+    n = x0.size
+
+    def f(xdata, *params):
+        params = np.array(params)
+        set_param_vector(model, params)
+        out = model(xdata).numpy()
+        if verbose:
+            # print('min(residuals)=%s; max(residuals)=%s' % (residuals.min(), residuals.max()), end='; ')
+            # print('||residuals|| =', np.linalg.norm(residuals))
+            if hasattr(f, 'last_params'):
+                step = params - f.last_params
+                print('||step|| =', np.linalg.norm(step))
+        f.last_params = params
+        return out.reshape((xdata.shape[0],))
+
+    popt, pcov = scipy.optimize.curve_fit(f, x_data, y_data, p0=x0, **kwargs_scipy)
+    set_param_vector(model, popt)
+    return popt
+
 def train_least_squares(model, x_data, y_data, x0=None, **kwargs_scipy):
+    """Train with scipy.optimize.least_squares. Not very fast."""
 
     kwargs_scipy.setdefault('method', 'lm')
     kwargs_scipy.setdefault('ftol', 1e-12)
